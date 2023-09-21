@@ -66,7 +66,7 @@ nr_processed = 0
 nr_lost = 0
 nr_packets_sent = 0
 nr_data_packets_sent = 0
-nrRetransmission = 0
+nr_retransmission = 0
 nr_data_retransmissions = 0
 nr_join_req_sent = 0
 nr_join_req_dropped = 0
@@ -417,7 +417,7 @@ class EndNode(NetworkNode):
 		global d0
 		global req_pack_len
 		global join_gateway
-		global nrRetransmission
+		global nr_retransmission
 		global nr_join_req_sent
 
 		req_packet = JoinRequest(self)
@@ -458,7 +458,7 @@ class EndNode(NetworkNode):
 			req_packet = JoinRequest(self)
 			req_packet.add_time = env.now
 			self.join_retry_count += 1
-			nrRetransmission += 1
+			nr_retransmission += 1
 
 			log(env, f"{self} sent join request RETRANSMISSION (retry count = {self.join_retry_count})")
 			if self.join_retry_count >= retrans_count:
@@ -960,7 +960,7 @@ def show_final_statistics():
 	print("Missed SACK packets:", nr_sack_missed_count)
 	print("Transmitted join request packets:", nr_join_req_sent)
 	print("Transmitted join accept packets:", nr_join_acp_sent)
-	print("Join Request Retransmissions:", nrRetransmission)
+	print("Join Request Retransmissions:", nr_retransmission)
 	print("Data Retransmissions:", nr_data_retransmissions)
 	print("Join request packets dropped by gateway:", nr_join_req_dropped)
 	print(f"Average join time: {avr_join:.3f} s")
@@ -979,7 +979,7 @@ def show_final_statistics():
 					  + f"Missed SACK packets: {nr_sack_missed_count}\n"
 					  + f"Transmitted join request packets: {nr_join_req_sent}\n"
 					  + f"Transmitted join accept packets: {nr_join_acp_sent}\n"
-					  + f"Join Retransmissions: {nrRetransmission}\n"
+					  + f"Join Retransmissions: {nr_retransmission}\n"
 					  + f"Data Retransmissions: {nr_data_retransmissions}\n"
 					  + f"Join request packets dropped by gateway: {nr_join_req_dropped}\n"
 					  + f"Average join time: {avr_join:.3f} s\n"
