@@ -239,14 +239,14 @@ class JoinGateway(Gateway):
 			log(env, f"gateway dropped join req from node {join_req.node.node_id}")
 			return
 
-		log(env,
-			f'{f"gateway sent join accept to node {join_req.node.node_id}":<40}'
-			f'{f"SF: {acp_packet.sf} ":<10}'
-			f'{f"Data size: {acp_packet.pl} b ":<20}'
-			f'{f"RSSI: {acp_packet.rssi(join_req.node):.3f} dBm ":<25}'
-			f'{f"Freq: {acp_packet.freq / 1000000.0:.3f} MHZ ":<24}'
-			f'{f"BW: {acp_packet.bw}  kHz ":<18}'
-			f'{f"Airtime: {acp_packet.rec_time / 1000.0:.3f} s ":<22}')
+		# log(env,
+			# f'{f"gateway sent join accept to node {join_req.node.node_id}":<40}'
+			# f'{f"SF: {acp_packet.sf} ":<10}'
+			# f'{f"Data size: {acp_packet.pl} b ":<20}'
+			# f'{f"RSSI: {acp_packet.rssi(join_req.node):.3f} dBm ":<25}'
+			# f'{f"Freq: {acp_packet.freq / 1000000.0:.3f} MHZ ":<24}'
+			# f'{f"BW: {acp_packet.bw}  kHz ":<18}'
+			# f'{f"Airtime: {acp_packet.rec_time / 1000.0:.3f} s ":<22}')
 
 		acp_packet.check_collision()
 		yield BroadcastTraffic.add_and_wait(env, acp_packet)
@@ -423,18 +423,18 @@ class EndNode(NetworkNode):
 		req_packet = JoinRequest(self)
 		req_packet.add_time = env.now
 
-		log(env,
-			f'{f"node {self.node_id} sent join request ":<40}'
-			f'{f"SF: {req_packet.sf} ":<10}'
-			f'{f"Data size: {req_packet.pl} b ":<20}'
-			f'{f"RSSI: {req_packet.rssi(join_gateway):.3f} dBm ":<25}'
-			f'{f"Freq: {req_packet.freq / 1000000.0:.3f} MHZ ":<24}'
-			f'{f"BW: {req_packet.bw}  kHz ":<18}'
-			f'{f"Airtime: {req_packet.rec_time / 1000.0:.3f} s ":<22}')
+		# log(env,
+			# f'{f"node {self.node_id} sent join request ":<40}'
+			# f'{f"SF: {req_packet.sf} ":<10}'
+			# f'{f"Data size: {req_packet.pl} b ":<20}'
+			# f'{f"RSSI: {req_packet.rssi(join_gateway):.3f} dBm ":<25}'
+			# f'{f"Freq: {req_packet.freq / 1000000.0:.3f} MHZ ":<24}'
+			# f'{f"BW: {req_packet.bw}  kHz ":<18}'
+			# f'{f"Airtime: {req_packet.rec_time / 1000.0:.3f} s ":<22}')
 
 		if req_packet.is_lost(join_gateway):
 			req_packet.lost = True
-			log(env, f"node {self.node_id} join request failed, too much path loss: {req_packet.rssi(join_gateway)}")
+			# log(env, f"node {self.node_id} join request failed, too much path loss: {req_packet.rssi(join_gateway)}")
 
 		while True:
 			req_packet.check_collision()
@@ -460,9 +460,9 @@ class EndNode(NetworkNode):
 			self.join_retry_count += 1
 			nr_retransmission += 1
 
-			log(env, f"{self} sent join request RETRANSMISSION (retry count = {self.join_retry_count})")
+			# log(env, f"{self} sent join request RETRANSMISSION (retry count = {self.join_retry_count})")
 			if self.join_retry_count >= retrans_count:
-				log(env, f"Request failed, too many retries: {self.join_retry_count}")
+				# log(env, f"Request failed, too many retries: {self.join_retry_count}")
 				return
 
 	# main discrete event loop, runs for each node
@@ -971,18 +971,19 @@ def show_final_statistics():
 	print(f"Number of nodes failed to connect to the network:",
 		  nodes_count - nr_joins if nodes_count - nr_joins >= 0 else 0)
 
-	output_file.write(f"Join Collisions: {nr_collisions}\n"
-					  + f"Data collisions: {nr_data_collisions}\n"
+	output_file.write(
+					  # f"Join Collisions: {nr_collisions}\n"
+					  f"Data collisions: {nr_data_collisions}\n"
 					  + f"Lost packets (due to path loss): {nr_lost}\n"
 					  + f"Transmitted data packets: {nr_data_packets_sent}\n"
 					  + f"Transmitted SACK packets: {nr_sack_sent}\n"
 					  + f"Missed SACK packets: {nr_sack_missed_count}\n"
-					  + f"Transmitted join request packets: {nr_join_req_sent}\n"
-					  + f"Transmitted join accept packets: {nr_join_acp_sent}\n"
-					  + f"Join Retransmissions: {nr_retransmission}\n"
+					  # + f"Transmitted join request packets: {nr_join_req_sent}\n"
+					  # + f"Transmitted join accept packets: {nr_join_acp_sent}\n"
+					  # + f"Join Retransmissions: {nr_retransmission}\n"
 					  + f"Data Retransmissions: {nr_data_retransmissions}\n"
-					  + f"Join request packets dropped by gateway: {nr_join_req_dropped}\n"
-					  + f"Average join time: {avr_join:.3f} s\n"
+					  # + f"Join request packets dropped by gateway: {nr_join_req_dropped}\n"
+					  # + f"Average join time: {avr_join:.3f} s\n"
 					  + f"Average energy consumption (Rx): {(erx / nodes_count):.3f} J\n"
 					  + f"Average energy consumption (Tx): {(etx / nodes_count):.3f} J\n"
 					  + f"Average energy consumption per node: {total_energy / nodes_count:.3f} J\n"
