@@ -236,7 +236,7 @@ class JoinGateway(Gateway):
 		if BroadcastTraffic.nr_join_acp > 0:
 			yield BroadcastTraffic.add_and_wait(env, acp_packet)
 			join_req.processed = False
-			log(env, f"gateway dropped join req from node {join_req.node.node_id}")
+			# log(env, f"gateway dropped join req from node {join_req.node.node_id}")
 			return
 
 		# log(env,
@@ -270,6 +270,9 @@ class DataGateway(Gateway):
 			return self.frames[sf - 7]
 		raise ValueError
 
+
+	# [SACK] -- gateway sent SACK packet to the nodes
+
 	def transmit_sack(self, env, sf):
 		# main sack packet transmission loop
 		while True:
@@ -279,7 +282,7 @@ class DataGateway(Gateway):
 			# print("-" * 70)
 			if self.frame(sf).nr_taken_slots != 0:
 				log(env,
-					f'{f"gateway sent SACK packet to the nodes: ":<40}'
+				    	f'[SACK-TRANSMIT]'
 					f'{f"SF: {sf} ":<10}'
 					f'{f"Data size: {sack_packet.pl} b ":<20}'
 					f'{"":<25}'
@@ -301,7 +304,7 @@ class DataGateway(Gateway):
 
 		if sack_packet.is_lost(node):
 			sack_packet.lost = True
-			log(env, f"{self} transmit to {node} SACK failed, too much path loss: {sack_packet.rssi(node)}")
+			log(env, f"[SACK-FAIL] {self} transmit to {node} SACK failed, too much path loss: {sack_packet.rssi(node)}")
 
 		sack_packet.check_collision()
 
@@ -317,7 +320,7 @@ class DataGateway(Gateway):
 			if node.waiting_first_sack:
 				node.sack_packet_received.succeed()
 		else:
-			log(env, f"Sack packet was not received by {node}")
+			log(env, f"[SACK-NOT-RECEIVED] Sack packet was not received by {node}")
 		sack_packet.reset()
 
 
@@ -475,9 +478,9 @@ class EndNode(NetworkNode):
 				yield env.timeout(random.uniform(0.0, float(2 * avg_wake_up_time)))  # wake up at random time
 				yield env.process(self.join_req(env))
 				if not self.connected:
-					log(env, f"node {self.node_id} connection failed")
+					log(env, f"[NODE-NO-CONNECTION] node {self.node_id} connection failed")
 					continue
-				log(env, f"node {self.node_id} connected")
+				log(env, f"[NODE-CONNECTION] node {self.node_id} connected")
 
 			# giving up in case of too many retransmissions
 			if not self.connected:
@@ -493,7 +496,7 @@ class EndNode(NetworkNode):
 
 			# calculating round start time
 			if self.round_start_time < env.now:
-				log(env, f"{self}: missed sack packet")
+				log(env, f"[SACK-MISSED] {self}: missed sack packet")
 				self.round_start_time = env.now + 1
 				self.missed_sack_count += 1
 				nr_sack_missed_count += 1
@@ -502,7 +505,7 @@ class EndNode(NetworkNode):
 
 			# reconnecting to gateway if too many SACK-s missed
 			if self.missed_sack_count == 3:
-				log(env, "node {}: reconnecting to the gateway. ".format(self.node_id))
+				log(env, "[NODE-RECONNECTION] node {}: reconnecting to the gateway. ".format(self.node_id))
 				self.connected = False
 				data_gateway.frame(self.sf).remove(self)
 				continue
@@ -527,8 +530,9 @@ class EndNode(NetworkNode):
 			data_packet.add_time = env.now
 			data_packet.sent = True
 
+			# [NODE-SEND-PACKET] -- node {self.node_id} sent data packet 
 			log(env,
-				f'{f"node {self.node_id} sent data packet ":<40}'
+				f'{f"[NODE-SEND-PACKET-{self.node_id}]":<40}'
 				f'{f"SF: {data_packet.sf} ":<10}'
 				f'{f"Data size: {data_packet.pl} b ":<20}'
 				f'{f"RSSI: {data_packet.rssi(data_gateway):.3f} dBm ":<25}'
@@ -538,7 +542,7 @@ class EndNode(NetworkNode):
 				f'{f"Guardtime: {self.guard_time / 1000.0:.3f} ms"}')
 
 			if data_packet.rssi(data_gateway) < get_sensitivity(data_packet.sf, data_packet.bw):
-				log(env, f"{self}: packet will be lost")
+				log(env, f"[NODE-LOST] {self}: packet will be lost")
 				data_packet.lost = True
 
 			data_packet.check_collision()
@@ -655,7 +659,7 @@ class Packet:
 	def check_collision(self):
 		self.processed = True
 		if BroadcastTraffic.nr_data_packets > max_packets:
-			log(env, "too many packets are being sent to the gateway:", BroadcastTraffic)
+			log(env, "[PACKET-OVERFLOW] too many packets are being sent to the gateway:", BroadcastTraffic)
 			self.processed = False
 
 		if BroadcastTraffic.nr_packets:
@@ -665,11 +669,11 @@ class Packet:
 
 				if self.node.is_gateway() != other.node.is_gateway() and self.sf == other.sf:
 					if self.processed and self.was_sent_to(other.node):
-						log(env, f"{self} from {self.node} is dropped")
+						log(env, f"[PACKET-DROP] {self} from {self.node} is dropped")
 						self.processed = False
 
 					if other.processed and other.was_sent_to(self.node):
-						log(env, f"{other} from {other.node} is dropped")
+						log(env, f"[PACKET-DROP-OTHER] {other} from {other.node} is dropped")
 						other.processed = False
 
 				if frequency_collision(self, other) and \
@@ -681,7 +685,7 @@ class Packet:
 							p2 = other
 						else:
 							p2 = self
-						log(env, f"COLLISION! {p.node} collided with {p2.node}")
+						log(env, f"[COLLISION] {p.node} collided with {p2.node}")
 
 
 class DataPacket(Packet):
